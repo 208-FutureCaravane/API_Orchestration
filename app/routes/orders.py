@@ -461,7 +461,7 @@ async def get_my_orders(
         },
         skip=skip,
         take=limit,
-        order_by={"orderTime": "desc"}
+        order={"orderTime": "desc"}
     )
     
     # Add item count to each order
@@ -602,7 +602,7 @@ async def get_restaurant_orders(
         },
         skip=skip,
         take=limit,
-        order_by={"orderTime": "desc"}
+        order={"orderTime": "desc"}
     )
     
     # Add item count
@@ -726,7 +726,7 @@ async def get_table_current_orders(
                 }
             }
         },
-        order_by={"orderTime": "desc"}
+        order={"orderTime": "desc"}
     )
     
     # Add item count

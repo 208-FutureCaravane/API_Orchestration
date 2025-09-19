@@ -36,7 +36,7 @@ async def get_restaurant_tables(
     
     tables = await db.table.find_many(
         where=where_clause,
-        order_by={"number": "asc"}
+        order={"number": "asc"}
     )
     
     return [TableListResponse.model_validate(table) for table in tables]
@@ -316,7 +316,7 @@ async def get_table_current_orders(
                 }
             }
         },
-        order_by={"orderTime": "desc"}
+        order={"orderTime": "desc"}
     )
     
     return {
@@ -361,7 +361,7 @@ async def get_tables_availability(
                 }
             }
         },
-        order_by={"number": "asc"}
+        order={"number": "asc"}
     )
     
     # Format availability data

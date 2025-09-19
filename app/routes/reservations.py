@@ -41,7 +41,7 @@ async def check_availability(request: ReservationAvailabilityRequest):
             "restaurantId": request.restaurantId,
             "isActive": True
         },
-        order_by={"number": "asc"}
+        order={"number": "asc"}
     )
     
     if not all_tables:
@@ -383,7 +383,7 @@ async def get_my_reservations(
         },
         skip=skip,
         take=limit,
-        order_by={"reservationStart": "desc"}
+        order={"reservationStart": "desc"}
     )
     
     # Format response
@@ -514,7 +514,7 @@ async def get_restaurant_reservations(
         },
         skip=skip,
         take=limit,
-        order_by={"reservationStart": "asc"}
+        order={"reservationStart": "asc"}
     )
     
     # Format response

@@ -47,13 +47,13 @@ async def get_restaurant_menus(
                 "include": {
                     "dishes": {
                         "where": {"isAvailable": True} if active_only else {},
-                        "order_by": {"displayOrder": "asc"}
+                        "order": {"displayOrder": "asc"}
                     }
                 },
-                "order_by": {"displayOrder": "asc"}
+                "order": {"displayOrder": "asc"}
             }
         },
-        order_by={"displayOrder": "asc"}
+        order={"displayOrder": "asc"}
     )
     
     return [MenuWithCategories.model_validate(menu) for menu in menus]

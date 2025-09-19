@@ -56,7 +56,7 @@ async def get_active_promotions(
                 }
             }
         },
-        order_by={"createdAt": "desc"}
+        order={"createdAt": "desc"}
     )
     
     # Filter out promotions from inactive restaurants
@@ -131,7 +131,7 @@ async def get_restaurant_promotions(
         },
         skip=skip,
         take=limit,
-        order_by={"startDate": "desc"}
+        order={"startDate": "desc"}
     )
     
     # Format response
@@ -443,7 +443,7 @@ async def get_restaurant_promotions_management(
         },
         skip=skip,
         take=limit,
-        order_by={"createdAt": "desc"}
+        order={"createdAt": "desc"}
     )
     
     # Format response

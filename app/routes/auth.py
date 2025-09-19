@@ -337,7 +337,7 @@ async def get_all_users(current_user=Depends(get_current_admin_user)):
     db = get_db()
     
     users = await db.user.find_many(
-        order_by={"createdAt": "desc"}
+        order={"createdAt": "desc"}
     )
     
     return [UserResponse.model_validate(user) for user in users]

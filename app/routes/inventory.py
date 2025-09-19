@@ -165,7 +165,7 @@ async def get_inventory_items(
             },
             skip=skip,
             take=limit,
-            order_by={"name": "asc"}
+            order={"name": "asc"}
         )
         
         # Format response and apply low stock filter if needed

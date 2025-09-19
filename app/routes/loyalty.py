@@ -119,7 +119,7 @@ async def get_my_loyalty_transactions(
         },
         skip=skip,
         take=limit,
-        order_by={"createdAt": "desc"}
+        order={"createdAt": "desc"}
     )
     
     # Format response
@@ -202,7 +202,7 @@ async def get_my_loyalty_stats(current_user = Depends(get_current_user)):
             }
         },
         take=10,
-        order_by={"createdAt": "desc"}
+        order={"createdAt": "desc"}
     )
     
     recent_list = []
@@ -494,7 +494,7 @@ async def get_restaurant_loyalty_stats(
             }
         },
         take=20,
-        order_by={"createdAt": "desc"}
+        order={"createdAt": "desc"}
     )
     
     recent_list = []

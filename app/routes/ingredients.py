@@ -120,7 +120,7 @@ async def get_ingredients(
             where=where_clause,
             skip=skip,
             take=limit,
-            order_by={"name": "asc"}
+            order={"name": "asc"}
         )
         
         # Get dish count for each ingredient

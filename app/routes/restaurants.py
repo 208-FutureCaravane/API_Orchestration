@@ -33,7 +33,7 @@ async def get_restaurants(
         include={"address": True},
         skip=skip,
         take=limit,
-        order_by={"createdAt": "desc"}
+        order={"createdAt": "desc"}
     )
     
     return [RestaurantListResponse.model_validate(restaurant) for restaurant in restaurants]
@@ -277,7 +277,7 @@ async def get_restaurant_staff(
             "isActive": True,
             "createdAt": True
         },
-        order_by={"role": "asc"}
+        order={"role": "asc"}
     )
     
     return {

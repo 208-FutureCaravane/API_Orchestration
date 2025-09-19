@@ -64,7 +64,7 @@ async def get_restaurant_reviews(
         },
         skip=skip,
         take=limit,
-        order_by={"createdAt": "desc"}
+        order={"createdAt": "desc"}
     )
     
     # Calculate stats
@@ -172,7 +172,7 @@ async def get_dish_reviews(
         },
         skip=skip,
         take=limit,
-        order_by={"createdAt": "desc"}
+        order={"createdAt": "desc"}
     )
     
     # Calculate stats
@@ -404,7 +404,7 @@ async def get_my_reviews(
         },
         skip=skip,
         take=limit,
-        order_by={"createdAt": "desc"}
+        order={"createdAt": "desc"}
     )
     
     # Format response
@@ -663,7 +663,7 @@ async def get_restaurant_reviews_management(
         },
         skip=skip,
         take=limit,
-        order_by={"createdAt": "desc"}
+        order={"createdAt": "desc"}
     )
     
     # Format response with more customer details for staff
