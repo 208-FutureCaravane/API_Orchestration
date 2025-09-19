@@ -207,7 +207,8 @@ model Order {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   items        OrderItem[]
-  payments     Payment[]
+  paymentId    Int?
+  payment      Payments?
   @@map("orders")
 }
 
@@ -244,27 +245,7 @@ enum PaymentStatus {
   FAILED
   REFUNDED
 }
-model Payment {
-  id              Int @id @default(autoincrement())
-  orderId     Int
-  order           Order         @relation(fields: [orderId], references: [id])
-  amount          Float
-  method          PaymentMethod
-  status          PaymentStatus @default(PENDING)
-  externalId      String?       
-  providerResponse Json?        
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  @@map("payments")
-}
-enum PaymentMethod {
-  CASH
-  CIB
-  EDAHABIA
-  PAYPAL
-  STRIPE
-  GUIDINI_PAY
-}
+
 
 model LoyaltyCard {
   id           Int @id @default(autoincrement())
@@ -380,4 +361,14 @@ enum InteractionType {
   ORDER
   REVIEW
   SEARCH
+}
+
+model Payments {
+  id                Int      @id @default(autoincrement())
+  paymentId         String   @unique // Payment gateway ID
+  orderId           Int      @unique
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+  
+  @@map("payments")
 }
