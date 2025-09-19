@@ -2,6 +2,9 @@ from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any
 from datetime import datetime
 import requests
+from app.core.config import settings    
+
+
 
 
 # Guidini Pay API Configuration
@@ -9,8 +12,8 @@ GUIDINI_PAY_URL = "https://epay.guiddini.dz/api/payment/initiate"
 GUIDINI_PAY_HEADERS = {
     "Accept": "application/json",
     "Content-Type": "application/json",
-    "x-app-key": "YOUR_APP_KEY",  # Replace with actual key
-    "x-app-secret": "YOUR_SECRET_KEY"  # Replace with actual secret
+    "x-app-key": settings.GUIDINI_APP_KEY,
+    "x-app-secret": settings.GUIDINI_API_KEY
 }
 
 
@@ -31,7 +34,7 @@ class PaymentResponse(BaseModel):
 
 class PaymentInitiateRequest(BaseModel):
     orderId: int
-    language: Optional[str] = Field(default="fr", description="Language: fr, en, or ar")
+    language: str
 
 
 class PaymentInitiateResponse(BaseModel):

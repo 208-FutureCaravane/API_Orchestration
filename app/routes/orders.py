@@ -463,6 +463,29 @@ async def get_my_orders(
     for order in orders:
         order_dict = order.__dict__.copy()
         order_dict["itemCount"] = len(order.items)
+        
+        # Convert user object to dict if it exists
+        if order.user:
+            order_dict["user"] = {
+                "id": order.user.id,
+                "firstName": order.user.firstName,
+                "lastName": order.user.lastName,
+                "email": order.user.email,
+                "phone": order.user.phone
+            }
+        else:
+            order_dict["user"] = None
+            
+        # Convert table object to dict if it exists
+        if order.table:
+            order_dict["table"] = {
+                "id": order.table.id,
+                "number": order.table.number,
+                "capacity": order.table.capacity
+            }
+        else:
+            order_dict["table"] = None
+            
         order_list.append(OrderListResponse.model_validate(order_dict))
     
     return order_list
@@ -604,6 +627,28 @@ async def get_restaurant_orders(
     for order in orders:
         order_dict = order.__dict__.copy()
         order_dict["itemCount"] = len(order.items)
+        
+        # Convert user object to dict if it exists
+        if order.user:
+            order_dict["user"] = {
+                "id": order.user.id,
+                "firstName": order.user.firstName,
+                "lastName": order.user.lastName,
+                "phone": order.user.phone
+            }
+        else:
+            order_dict["user"] = None
+            
+        # Convert table object to dict if it exists
+        if order.table:
+            order_dict["table"] = {
+                "id": order.table.id,
+                "number": order.table.number,
+                "capacity": order.table.capacity
+            }
+        else:
+            order_dict["table"] = None
+            
         order_list.append(OrderListResponse.model_validate(order_dict))
     
     return order_list
@@ -728,6 +773,28 @@ async def get_table_current_orders(
     for order in orders:
         order_dict = order.__dict__.copy()
         order_dict["itemCount"] = len(order.items)
+        
+        # Convert user object to dict if it exists
+        if order.user:
+            order_dict["user"] = {
+                "id": order.user.id,
+                "firstName": order.user.firstName,
+                "lastName": order.user.lastName,
+                "phone": order.user.phone
+            }
+        else:
+            order_dict["user"] = None
+            
+        # Convert table object to dict if it exists
+        if order.table:
+            order_dict["table"] = {
+                "id": order.table.id,
+                "number": order.table.number,
+                "capacity": order.table.capacity
+            }
+        else:
+            order_dict["table"] = None
+            
         order_list.append(OrderListResponse.model_validate(order_dict))
     
     return order_list

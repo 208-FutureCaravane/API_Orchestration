@@ -25,6 +25,13 @@ async def initiate_payment(
     """
     db = get_db()
     
+    # Check if Guidini Pay is configured
+    if not GUIDINI_PAY_HEADERS.get("x-app-key") or not GUIDINI_PAY_HEADERS.get("x-app-secret"):
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Payment gateway is not configured. Please contact support."
+        )
+    
     try:
         # Get the order and validate it belongs to the user
         order = await db.order.find_unique(
@@ -78,24 +85,35 @@ async def initiate_payment(
             timeout=30
         )
         
-        if response.status_code != 200:
+        # Try to parse the response regardless of status code
+        try:
+            guidini_response = response.json()
+        except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
-                detail="Payment gateway error"
+                detail=f"Invalid JSON response from payment gateway. Status: {response.status_code}, Response: {response.text}"
             )
         
-        guidini_response = response.json()
-        
+        # Check if response has expected structure
         if "data" not in guidini_response:
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
-                detail="Invalid payment gateway response"
+                detail=f"Unexpected payment gateway response format: {guidini_response}"
             )
         
         # Extract transaction data
         transaction_data = guidini_response["data"]
         transaction_id = transaction_data["id"]
+        
+        # Extract form_url and clean it if it has markdown brackets
         form_url = transaction_data["attributes"]["form_url"]
+        # Remove markdown brackets if present: [url](url) -> url
+        if form_url.startswith('[') and '](' in form_url and form_url.endswith(')'):
+            # Extract URL from markdown format [text](url)
+            start = form_url.find('](') + 2
+            end = form_url.rfind(')')
+            form_url = form_url[start:end]
+        
         amount = transaction_data["attributes"]["amount"]
         
         # Create payment record in database
@@ -124,6 +142,72 @@ async def initiate_payment(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to initiate payment: {str(e)}"
+        )
+
+
+@router.get("/receipt/{order_number}")
+async def get_payment_receipt(
+    order_number: str,
+    current_user=Depends(get_current_user)
+):
+    """
+    Get payment receipt from Guidini Pay by order number.
+    Routes the request to Guidini Pay receipt API and returns the response.
+    """
+    db = get_db()
+    
+    try:
+        # First, find the order by orderNumber to validate access
+        order = await db.order.find_unique(
+            where={"orderNumber": order_number},
+            include={"user": True, "restaurant": True}
+        )
+        
+        if not order:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Order not found"
+            )
+        
+        # Check authorization: user owns the order OR user is staff of the restaurant
+        is_owner = current_user.role == "CLIENT" and order.userId == current_user.id
+        is_restaurant_staff = (
+            current_user.role in ["WAITER", "CHEF", "MANAGER", "ADMIN"] and
+            current_user.restaurantId == order.restaurantId
+        )
+        
+        if not (is_owner or is_restaurant_staff):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only download receipts for your own orders or your restaurant's orders"
+            )
+        
+        # Make request to Guidini Pay receipt API
+        response = requests.get(
+            "https://epay.guiddini.dz/api/payment/receipt",
+            json={"order_number": order_number},
+            headers=GUIDINI_PAY_HEADERS,
+            timeout=30
+        )
+        
+        if response.status_code != 200:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Payment gateway error"
+            )
+        
+        # Return the Guidini Pay receipt response directly
+        return response.json()
+        
+    except requests.RequestException as e:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Payment gateway connection error: {str(e)}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve payment receipt: {str(e)}"
         )
 
 
@@ -375,6 +459,51 @@ async def list_payments(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve payments: {str(e)}"
+        )
+
+
+@router.get("/callback")
+async def payment_callback(order_number: str = Query(...)):
+    """
+    Payment confirmation callback from Guidini Pay.
+    Called when payment is confirmed with order_number as query parameter.
+    """
+    db = get_db()
+    
+    try:
+        # Find the order by orderNumber
+        order = await db.order.find_unique(
+            where={"orderNumber": order_number},
+            include={"restaurant": True, "user": True}
+        )
+        
+        if not order:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Order not found"
+            )
+        
+        # Update the order payment status to PAID
+        updated_order = await db.order.update(
+            where={"orderNumber": order_number},
+            data={"paymentStatus": "PAID"}
+        )
+        
+        # You can redirect to a success page or return confirmation
+        return {
+            "success": True,
+            "message": "Payment confirmed successfully",
+            "orderNumber": order_number,
+            "orderId": order.id,
+            "paymentStatus": "PAID",
+            "totalAmount": order.totalAmount,
+            "restaurant": order.restaurant.name if order.restaurant else None
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process payment confirmation: {str(e)}"
         )
 
 

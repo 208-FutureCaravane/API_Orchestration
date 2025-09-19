@@ -9,6 +9,10 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
+    # Guidini Pay Settings
+    GUIDINI_APP_KEY: Optional[str] = None  
+    GUIDINI_API_KEY: Optional[str] = None  
+    
     # Database
     DATABASE_URL: str
     

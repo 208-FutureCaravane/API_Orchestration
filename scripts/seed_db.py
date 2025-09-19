@@ -101,7 +101,7 @@ async def main():
         {'firstName': 'Alice', 'lastName': 'Waiter', 'role': 'WAITER'},
         {'firstName': 'Bob', 'lastName': 'Server', 'role': 'WAITER'},
         {'firstName': 'Charlie', 'lastName': 'Chef', 'role': 'CHEF'},
-        {'firstName': 'Diana', 'lastName': 'Cook', 'role': 'CHEF'},
+        {'firstName': 'Diana', 'lastName': 'Cook', 'role': 'CHEF'},john.manager@caravane.com
     ]
     
     phone_counter = 333333330
