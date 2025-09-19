@@ -2,12 +2,14 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from datetime import datetime, timedelta
 from app.models.auth import (
     UserLogin, UserRegister, TokenResponse, RefreshTokenRequest, 
-    PasswordChange, UserResponse, UserUpdate
+    PasswordChange, UserResponse, UserUpdate, StaffLogin, 
+    TempTokenResponse, OtpVerificationRequest
 )
 from app.auth.jwt import (
     verify_password, get_password_hash, create_access_token, 
-    create_refresh_token, verify_token
+    create_refresh_token, verify_token, create_temp_token, verify_temp_token
 )
+from app.utils.sms_service import SMSService
 from app.core.config import settings
 from app.core.database import get_db
 from app.middleware.roles import (
@@ -67,9 +69,111 @@ async def register(user_data: UserRegister):
     return UserResponse.model_validate(user)
 
 
+@router.post("/staff-login", response_model=TempTokenResponse)
+async def staff_login(user_data: StaffLogin):
+    """Staff login with 2FA - returns temporary token."""
+    db = get_db()
+    
+    # Find user by phone
+    user = await db.user.find_unique(where={"phone": user_data.phone})
+    
+    if not user or not verify_password(user_data.password, user.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect phone or password"
+        )
+    
+    if not user.isActive:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Account is inactive"
+        )
+    
+    # Check if user is staff
+    if user.role not in ["WAITER", "CHEF", "MANAGER", "ADMIN"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Staff access only"
+        )
+    
+    # Send OTP
+    sms_service = SMSService()
+    otp_success = await sms_service.send_otp(user.id, user.phone, "LOGIN")
+    
+    if not otp_success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send OTP"
+        )
+    
+    # Create temporary token
+    temp_token = create_temp_token(user.id, "2fa")
+    
+    return TempTokenResponse(
+        temp_token=temp_token,
+        message="OTP sent to your phone. Please verify to complete login.",
+        expires_in=300  # 5 minutes
+    )
+
+
+@router.post("/verify-otp", response_model=TokenResponse)
+async def verify_otp_and_login(otp_data: OtpVerificationRequest):
+    """Verify OTP and complete staff login."""
+    db = get_db()
+    
+    # Verify temporary token
+    payload = verify_temp_token(otp_data.temp_token, "2fa")
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired temporary token"
+        )
+    
+    user_id = int(payload.get("sub"))
+    
+    # Verify OTP
+    sms_service = SMSService()
+    otp_valid = await sms_service.verify_otp(user_id, otp_data.otp_code, "LOGIN")
+    
+    if not otp_valid:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired OTP"
+        )
+    
+    # Get user
+    user = await db.user.find_unique(where={"id": user_id})
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Create tokens
+    access_token = create_access_token(data={"sub": str(user.id)})
+    refresh_token = create_refresh_token(data={"sub": str(user.id)})
+    
+    # Store refresh token in database
+    expires_at = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    await db.refreshtoken.create(
+        data={
+            "token": refresh_token,
+            "userId": user.id,
+            "expiresAt": expires_at
+        }
+    )
+    
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        user=UserResponse.model_validate(user)
+    )
+
+
 @router.post("/login", response_model=TokenResponse)
 async def login(user_data: UserLogin):
-    """Authenticate user and return access token."""
+    """Authenticate regular user and return access token (customers only)."""
     db = get_db()
     
     # Find user by email or phone
@@ -91,7 +195,14 @@ async def login(user_data: UserLogin):
             detail="Account is inactive"
         )
     
-    # Create tokens
+    # For staff users, redirect to 2FA login
+    if user.role in ["WAITER", "CHEF", "MANAGER", "ADMIN"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Staff users must use /auth/staff-login for 2FA authentication"
+        )
+    
+    # Create tokens for customer users
     access_token = create_access_token(data={"sub": str(user.id)})
     refresh_token = create_refresh_token(data={"sub": str(user.id)})
     

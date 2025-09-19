@@ -19,6 +19,26 @@ class UserLogin(BaseModel):
         }
 
 
+class StaffLogin(BaseModel):
+    """Staff login with phone number (for 2FA flow)"""
+    phone: int = Field(..., description="Staff phone number")
+    password: str = Field(..., min_length=6, description="Staff password")
+
+
+class TempTokenResponse(BaseModel):
+    """Temporary token response for 2FA"""
+    tempToken: str
+    message: str
+    requiresOtp: bool = True
+    expiresIn: int = Field(default=300, description="Temp token expires in seconds (5 minutes)")
+
+
+class OtpVerificationRequest(BaseModel):
+    """OTP verification with temporary token"""
+    tempToken: str = Field(..., description="Temporary token from login")
+    otpCode: str = Field(..., min_length=6, max_length=6, description="6-digit OTP code")
+
+
 class UserRegister(BaseModel):
     """User registration request model."""
     email: Optional[EmailStr] = None

@@ -14,6 +14,86 @@ from app.middleware.roles import get_current_user, get_current_staff_user
 router = APIRouter(prefix="/payments", tags=["Payments"])
 
 
+@router.post("/initiate-with-otp", response_model=PaymentInitiateResponse)
+async def initiate_payment_with_otp(
+    payment_request: PaymentInitiateRequest,
+    current_user=Depends(get_current_user)
+):
+    """
+    Initiate payment with OTP verification for added security.
+    Sends OTP to user's phone before processing payment.
+    """
+    from app.utils.sms_service import sms_service
+    
+    if not sms_service:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="SMS service is not available for secure payments"
+        )
+    
+    db = get_db()
+    
+    # Check if Guidini Pay is configured
+    if not GUIDINI_PAY_HEADERS.get("x-app-key") or not GUIDINI_PAY_HEADERS.get("x-app-secret"):
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Payment gateway is not configured. Please contact support."
+        )
+    
+    try:
+        # Get the order and validate it belongs to the user
+        order = await db.order.find_unique(
+            where={"id": payment_request.orderId},
+            include={"user": True, "restaurant": True}
+        )
+        
+        if not order:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Order not found"
+            )
+        
+        # Check if user owns the order (unless they're staff)
+        if current_user.role == "CLIENT" and order.userId != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only pay for your own orders"
+            )
+        
+        # Check if order is already paid
+        if order.paymentStatus == "PAID":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Order is already paid"
+            )
+        
+        # Send OTP for payment confirmation
+        otp_code = await sms_service.send_otp(current_user.id, str(current_user.phone), "PAYMENT_CONFIRMATION")
+        
+        if not otp_code:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to send OTP for payment verification"
+            )
+        
+        return PaymentInitiateResponse(
+            success=True,
+            message="OTP sent to your phone. Please verify to proceed with payment.",
+            paymentId=None,
+            transactionId=None,
+            formUrl=None,
+            amount=str(order.totalAmount)
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to initiate secure payment: {str(e)}"
+        )
+
+
 @router.post("/initiate", response_model=PaymentInitiateResponse)
 async def initiate_payment(
     payment_request: PaymentInitiateRequest,

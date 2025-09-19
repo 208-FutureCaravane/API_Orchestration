@@ -13,6 +13,11 @@ class Settings(BaseSettings):
     GUIDINI_APP_KEY: Optional[str] = None  
     GUIDINI_API_KEY: Optional[str] = None  
     
+    # Twilio Settings
+    TWILIO_ACCOUNT_SID: Optional[str] = None
+    TWILIO_AUTH_TOKEN: Optional[str] = None
+    TWILIO_PHONE_NUMBER: Optional[str] = None
+    
     # Database
     DATABASE_URL: str
     

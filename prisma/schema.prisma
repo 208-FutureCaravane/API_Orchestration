@@ -26,6 +26,7 @@ model User {
   address      Address? 
   reservations Reservation[]
   refreshTokens RefreshToken[]
+  otpCodes     OtpCode[]
   @@map("users")
 }
 
@@ -371,4 +372,23 @@ model Payments {
   createdAt         DateTime @default(now())
   
   @@map("payments")
+}
+
+model OtpCode {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code      String
+  purpose   OtpPurpose
+  isUsed    Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  
+  @@map("otp_codes")
+}
+
+enum OtpPurpose {
+  STAFF_AUTH
+  PAYMENT_CONFIRMATION
+  PASSWORD_RESET
 }

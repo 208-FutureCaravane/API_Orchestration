@@ -67,6 +67,41 @@ def verify_token(token: str, token_type: str = "access") -> Optional[dict]:
         return None
 
 
+def create_temp_token(user_id: int, purpose: str = "2fa") -> str:
+    """Create a temporary token for 2FA verification (5 minutes)."""
+    expire = datetime.utcnow() + timedelta(minutes=5)
+    to_encode = {
+        "sub": str(user_id),
+        "exp": expire,
+        "type": "temp",
+        "purpose": purpose
+    }
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return encoded_jwt
+
+
+def verify_temp_token(token: str, purpose: str = "2fa") -> Optional[dict]:
+    """Verify and decode a temporary token."""
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        
+        # Check token type and purpose
+        if payload.get("type") != "temp" or payload.get("purpose") != purpose:
+            return None
+            
+        # Check expiration
+        exp = payload.get("exp")
+        if exp is None:
+            return None
+            
+        if datetime.utcnow() > datetime.fromtimestamp(exp):
+            return None
+            
+        return payload
+    except JWTError:
+        return None
+
+
 def get_user_id_from_token(token: str) -> Optional[int]:
     """Extract user ID from JWT token."""
     payload = verify_token(token)
