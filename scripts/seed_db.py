@@ -119,7 +119,7 @@ async def main():
                 'password': '$2b$12$7rOF89hoYTI/jNWv4hBhLeWfMSDE9oeRrSKSElpiZm95hRtn0Vc9y',  # hashed 'staff123'
                 'restaurantId': restaurant.id
             })
-            users.append(staff)
+            users.append(staff)333333330
             staff_members.append(staff)
     
     # Create Clients

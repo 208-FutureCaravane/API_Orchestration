@@ -8,7 +8,7 @@ datasource db {
 model User {
   id          Int   @id @default(autoincrement())
   email       String?  @unique
-  phone       Int  @unique
+  phone       BigInt  @unique
   firstName   String
   lastName    String
   role        UserRole @default(CLIENT)

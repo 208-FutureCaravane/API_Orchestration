@@ -9,7 +9,7 @@ from app.auth.jwt import (
     verify_password, get_password_hash, create_access_token, 
     create_refresh_token, verify_token, create_temp_token, verify_temp_token
 )
-from app.utils.sms_service import SMSService
+from app.utils.sms_service_debug import SMSService
 from app.core.config import settings
 from app.core.database import get_db
 from app.middleware.roles import (
@@ -97,22 +97,29 @@ async def staff_login(user_data: StaffLogin):
         )
     
     # Send OTP
+    print(f"[DEBUG] About to initialize SMS service...")
     sms_service = SMSService()
-    otp_success = await sms_service.send_otp(user.id, user.phone, "LOGIN")
+    print(f"[DEBUG] SMS service initialized, calling send_otp...")
+    otp_result = await sms_service.send_otp(user.id, str(user.phone), "STAFF_AUTH")
+    print(f"[DEBUG] OTP send result: {otp_result}")
     
-    if not otp_success:
+    if not otp_result.get("success", False):
+        # Return the actual Twilio error in the API response for debugging
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to send OTP"
+            detail={
+                "message": "Failed to send OTP",
+                "debug_info": otp_result
+            }
         )
     
     # Create temporary token
     temp_token = create_temp_token(user.id, "2fa")
     
     return TempTokenResponse(
-        temp_token=temp_token,
+        tempToken=temp_token,
         message="OTP sent to your phone. Please verify to complete login.",
-        expires_in=300  # 5 minutes
+        expiresIn=300  # 5 minutes
     )
 
 
@@ -122,7 +129,7 @@ async def verify_otp_and_login(otp_data: OtpVerificationRequest):
     db = get_db()
     
     # Verify temporary token
-    payload = verify_temp_token(otp_data.temp_token, "2fa")
+    payload = verify_temp_token(otp_data.tempToken, "2fa")
     if not payload:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -133,7 +140,7 @@ async def verify_otp_and_login(otp_data: OtpVerificationRequest):
     
     # Verify OTP
     sms_service = SMSService()
-    otp_valid = await sms_service.verify_otp(user_id, otp_data.otp_code, "LOGIN")
+    otp_valid = await sms_service.verify_otp(user_id, otp_data.otpCode, "STAFF_AUTH")
     
     if not otp_valid:
         raise HTTPException(
