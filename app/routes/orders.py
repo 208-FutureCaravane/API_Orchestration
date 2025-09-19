@@ -447,18 +447,12 @@ async def get_my_orders(
         where={"userId": current_user.id},
         include={
             "table": True,
-            "restaurant": {"select": {"name": True}},
+            "restaurant": True,
             "items": True,
             "deliveryAddress": True,  # Include delivery address for orders
-            "user": {
-                "select": {
-                    "firstName": True,
-                    "lastName": True,
-                    "phone": True,
-                    "email": True
-                }
+            "user": True
             }
-        },
+        ,
         skip=skip,
         take=limit,
         order={"orderTime": "desc"}

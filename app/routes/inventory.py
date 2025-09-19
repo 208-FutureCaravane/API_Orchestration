@@ -477,8 +477,7 @@ async def get_inventory_stats(
     
     # Get restaurant name
     restaurant = await db.restaurant.find_unique(
-        where={"id": restaurant_id},
-        select={"name": True}
+        where={"id": restaurant_id}
     )
     
     if not restaurant:

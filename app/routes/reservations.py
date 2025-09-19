@@ -251,14 +251,7 @@ async def create_reservation(
     
     # Get user's complete profile for contact information
     user_profile = await db.user.find_unique(
-        where={"id": current_user.id},
-        select={
-            "id": True,
-            "firstName": True,
-            "lastName": True,
-            "phone": True,
-            "email": True
-        }
+        where={"id": current_user.id}
     )
     
     if not user_profile:

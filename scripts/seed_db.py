@@ -69,7 +69,7 @@ async def main():
             'lastName': 'Administrator',
             'role': 'ADMIN',
             'isActive': True,
-            'password': '$2b$12$LQv3c1yqBWVHxkd0LQ1Ou.J0F2R0K1mBz8g1xYjN7dQzQx1Y2Y2Y2'  # hashed 'admin123'
+            'password': '$2b$12$KVtnpBREulpi3vjhE9SveOyGxTADCAzYOqm/5YuFL/rZy8m/5P0M6'  # hashed 'admin123'
         })
         print(f"✅ Created admin user")
     else:
@@ -90,7 +90,7 @@ async def main():
             **manager_info,
             'role': 'MANAGER',
             'isActive': True,
-            'password': '$2b$12$LQv3c1yqBWVHxkd0LQ1Ou.J0F2R0K1mBz8g1xYjN7dQzQx1Y2Y2Y2',
+            'password': '$2b$12$cQ7.1vON3C2ez9pAZ8ooHOaUnG3MtHQ5/UVZUrdKX/AGwcWIK58MW',  # hashed 'manager123'
             'restaurantId': restaurants[i].id
         })
         users.append(manager)
@@ -116,7 +116,7 @@ async def main():
                 'phone': phone_counter,
                 'role': staff_info['role'],
                 'isActive': True,
-                'password': '$2b$12$LQv3c1yqBWVHxkd0LQ1Ou.J0F2R0K1mBz8g1xYjN7dQzQx1Y2Y2Y2',
+                'password': '$2b$12$7rOF89hoYTI/jNWv4hBhLeWfMSDE9oeRrSKSElpiZm95hRtn0Vc9y',  # hashed 'staff123'
                 'restaurantId': restaurant.id
             })
             users.append(staff)
@@ -138,7 +138,7 @@ async def main():
             **client_info,
             'role': 'CLIENT',
             'isActive': True,
-            'password': '$2b$12$LQv3c1yqBWVHxkd0LQ1Ou.J0F2R0K1mBz8g1xYjN7dQzQx1Y2Y2Y2'
+            'password': '$2b$12$Y2z.FHPWadE4.doQbvvFe.zdCuFi7H3dIVrViIXuqOgpxZ/14c5AS'  # hashed 'client123'
         })
         clients.append(client)
         users.append(client)

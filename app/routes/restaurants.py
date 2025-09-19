@@ -267,16 +267,6 @@ async def get_restaurant_staff(
             "restaurantId": restaurant_id,
             "role": {"in": ["WAITER", "CHEF", "MANAGER"]}
         },
-        select={
-            "id": True,
-            "firstName": True,
-            "lastName": True,
-            "email": True,
-            "phone": True,
-            "role": True,
-            "isActive": True,
-            "createdAt": True
-        },
         order={"role": "asc"}
     )
     

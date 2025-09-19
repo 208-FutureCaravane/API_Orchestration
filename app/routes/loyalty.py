@@ -132,8 +132,7 @@ async def get_my_loyalty_transactions(
         if transaction.orderId:
             try:
                 order = await db.order.find_unique(
-                    where={"id": transaction.orderId},
-                    select={"orderNumber": True}
+                    where={"id": transaction.orderId}
                 )
                 transaction_dict["orderNumber"] = order.orderNumber if order else None
             except:
@@ -432,8 +431,7 @@ async def get_restaurant_loyalty_stats(
     
     # Get restaurant
     restaurant = await db.restaurant.find_unique(
-        where={"id": restaurant_id},
-        select={"name": True}
+        where={"id": restaurant_id}
     )
     
     if not restaurant:

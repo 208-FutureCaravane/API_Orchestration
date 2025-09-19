@@ -98,8 +98,7 @@ async def get_restaurant_promotions(
     
     # Validate restaurant exists and is active
     restaurant = await db.restaurant.find_unique(
-        where={"id": restaurant_id},
-        select={"id": True, "name": True, "isActive": True}
+        where={"id": restaurant_id}
     )
     
     if not restaurant or not restaurant.isActive:

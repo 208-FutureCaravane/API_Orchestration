@@ -47,10 +47,10 @@ async def get_restaurant_menus(
                 "include": {
                     "dishes": {
                         "where": {"isAvailable": True} if active_only else {},
-                        "order": {"displayOrder": "asc"}
+                        "orderBy": {"displayOrder": "asc"}
                     }
                 },
-                "order": {"displayOrder": "asc"}
+                "orderBy": {"displayOrder": "asc"}
             }
         },
         order={"displayOrder": "asc"}
