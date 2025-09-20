@@ -97,20 +97,13 @@ async def staff_login(user_data: StaffLogin):
         )
     
     # Send OTP
-    print(f"[DEBUG] About to initialize SMS service...")
     sms_service = SMSService()
-    print(f"[DEBUG] SMS service initialized, calling send_otp...")
     otp_result = await sms_service.send_otp(user.id, str(user.phone), "STAFF_AUTH")
-    print(f"[DEBUG] OTP send result: {otp_result}")
     
     if not otp_result.get("success", False):
-        # Return the actual Twilio error in the API response for debugging
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "message": "Failed to send OTP",
-                "debug_info": otp_result
-            }
+            detail="Failed to send OTP"
         )
     
     # Create temporary token
